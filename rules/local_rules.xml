@@ -1,0 +1,151 @@
+<!-- Local rules -->
+
+<!-- Modify it at your will. -->
+<!-- Copyright (C) 2015, Wazuh Inc. -->
+
+<group name="honeytrack,">
+
+  <rule id="100100" level="3">
+    <decoded_as>json</decoded_as>
+    <field name="session_id">\w+</field>
+    <description>HoneyTrack: honeypot event ($(event)) from $(peer_ip)</description>
+    <group>honeytrack,recon,</group>
+  </rule>
+
+  <rule id="100101" level="5">
+    <if_sid>100100</if_sid>
+    <field name="event">^session_start$</field>
+    <description>HoneyTrack: honeypot session opened from $(peer_ip) via $(protocol)</description>
+    <mitre>
+      <id>T1078</id>
+    </mitre>
+    <group>honeytrack,authentication_success,</group>
+  </rule>
+
+  <rule id="100102" level="6">
+    <if_sid>100100</if_sid>
+    <field name="event">^auth_attempt$</field>
+    <description>HoneyTrack: credential attempt captured from $(peer_ip)</description>
+    <mitre>
+      <id>T1110</id>
+    </mitre>
+    <group>honeytrack,authentication_failures,</group>
+  </rule>
+
+  <rule id="100103" level="5">
+    <if_sid>100100</if_sid>
+    <field name="event">^command$</field>
+    <description>HoneyTrack: command executed by $(peer_ip): $(value)</description>
+    <mitre>
+      <id>T1059</id>
+    </mitre>
+    <group>honeytrack,</group>
+  </rule>
+
+  <rule id="100104" level="10">
+    <if_sid>100100</if_sid>
+    <field name="event">^download_attempt$</field>
+    <description>HoneyTrack: ingress tool transfer attempt from $(peer_ip)</description>
+    <mitre>
+      <id>T1105</id>
+    </mitre>
+    <group>honeytrack,</group>
+  </rule>
+
+  <rule id="100105" level="9">
+    <if_sid>100100</if_sid>
+    <field name="event">^file_drop$</field>
+    <description>HoneyTrack: file dropped by $(peer_ip): $(value)</description>
+    <mitre>
+      <id>T1105</id>
+    </mitre>
+    <group>honeytrack,</group>
+  </rule>
+
+  <rule id="100106" level="8">
+    <if_sid>100100</if_sid>
+    <field name="event">^permission_change$</field>
+    <description>HoneyTrack: permission change by $(peer_ip): $(value)</description>
+    <mitre>
+      <id>T1222</id>
+    </mitre>
+    <group>honeytrack,</group>
+  </rule>
+
+  <rule id="100107" level="12">
+    <if_sid>100100</if_sid>
+    <field name="event">^persistence_attempt$</field>
+    <description>HoneyTrack: persistence attempt by $(peer_ip): $(value)</description>
+    <mitre>
+      <id>T1053</id>
+    </mitre>
+    <group>honeytrack,</group>
+  </rule>
+
+  <!-- ===== newly emitted events ===== -->
+
+  <rule id="100108" level="8">
+    <if_sid>100100</if_sid>
+    <field name="event">^privilege_escalation$</field>
+    <description>HoneyTrack: privilege escalation attempt by $(peer_ip): $(value)</description>
+    <mitre>
+      <id>T1548.003</id>
+    </mitre>
+    <group>honeytrack,</group>
+  </rule>
+
+  <rule id="100109" level="9">
+    <if_sid>100100</if_sid>
+    <field name="event">^interpreter_exec$</field>
+    <description>HoneyTrack: interpreter execution by $(peer_ip): $(value)</description>
+    <mitre>
+      <id>T1059.004</id>
+    </mitre>
+    <group>honeytrack,</group>
+  </rule>
+
+  <rule id="100110" level="3">
+    <if_sid>100100</if_sid>
+    <field name="event">^session_end$</field>
+    <description>HoneyTrack: session closed for $(peer_ip) ($(value))</description>
+    <group>honeytrack,</group>
+  </rule>
+
+  <!-- ===== correlation rules ===== -->
+
+  <!-- Repeated credential attempts from one source = brute force. -->
+  <rule id="100120" level="10" frequency="5" timeframe="120">
+    <if_matched_sid>100102</if_matched_sid>
+    <same_field>peer_ip</same_field>
+    <description>HoneyTrack: brute force - repeated credential attempts from $(peer_ip)</description>
+    <mitre>
+      <id>T1110</id>
+    </mitre>
+    <group>honeytrack,authentication_failures,</group>
+  </rule>
+
+  <!-- Many commands in seconds = scripted, not a human at a keyboard. -->
+  <rule id="100121" level="10" frequency="10" timeframe="60">
+    <if_matched_sid>100103</if_matched_sid>
+    <same_field>peer_ip</same_field>
+    <description>HoneyTrack: automated command execution from $(peer_ip) - scripted attacker</description>
+    <mitre>
+      <id>T1059</id>
+    </mitre>
+    <group>honeytrack,</group>
+  </rule>
+
+  <!-- Payload pulled in, then persistence set up: an actual compromise sequence. -->
+  <rule id="100122" level="13" frequency="2" timeframe="600">
+    <if_sid>100107</if_sid>
+    <if_matched_sid>100104</if_matched_sid>
+    <same_field>peer_ip</same_field>
+    <description>HoneyTrack: kill chain - payload download followed by persistence from $(peer_ip)</description>
+    <mitre>
+      <id>T1105</id>
+      <id>T1053</id>
+    </mitre>
+    <group>honeytrack,</group>
+  </rule>
+
+</group>

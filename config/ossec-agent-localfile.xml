@@ -1,0 +1,11 @@
+  <localfile>
+    <log_format>json</log_format>
+    <location>/home/tk187/honeytrack/data/logs/events.jsonl</location>
+  </localfile>
+
+  <localfile>
+    <log_format>json</log_format>
+    <location>/home/tk187/honeytrack/data/logs/auth_attempts.jsonl</location>
+  </localfile>
+
+  
