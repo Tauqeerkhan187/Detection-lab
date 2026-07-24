@@ -156,8 +156,6 @@ $ sudo /var/ossec/bin/wazuh-logtest
 
 **Correlation thresholds** fired exactly at their configured counts — `100120` on the fifth credential attempt, `100121` on the tenth command.
 
-![Logtest verification](logtest-verification.png)
-
 **Live confirmation.** A single honeypot session running `sudo whoami`, `bash`, `wget`, `chmod +x`, and `crontab -e` produced `100101`, `100108` ×2, `100109`, `100104`, `100105`, `100106`, `100110`, and the `100122` kill chain — with no events falling through to the base rule.
 
 ![Threat Hunting dashboard](threat-hunting.png)
