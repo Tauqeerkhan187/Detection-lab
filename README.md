@@ -7,7 +7,7 @@ The Linux side is the blue-team counterpart to [HoneyTrack](https://github.com/T
 ![MITRE ATT&CK Framework](docs/mitre-framework.png)
 
 
-![Windows detections mapped to MITRE ATT&CK](windows-mitre.png)
+![Windows detections mapped to MITRE ATT&CK](docs/windows-mitre.png)
 
 ---
 
@@ -103,7 +103,7 @@ Two platforms, documented separately:
 
 The bolded rules on both platforms are correlations. They deliberately outrank the individual steps they're built from: a sequence is more meaningful than any single event within it.
 
-![Custom Windows rules firing alongside built-ins](windows-alerts.png)
+![Custom Windows rules firing alongside built-ins](docs/windows-alerts.png)
 
 ---
 
