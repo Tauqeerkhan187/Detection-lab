@@ -6,6 +6,9 @@ The Linux side is the blue-team counterpart to [HoneyTrack](https://github.com/T
 
 ![MITRE ATT&CK Framework](docs/mitre-framework.png)
 
+
+![Windows detections mapped to MITRE ATT&CK](windows-mitre.png)
+
 ---
 
 ## Why I built it
@@ -99,6 +102,8 @@ Two platforms, documented separately:
 | **100220** | **Kill chain** — ingress → persistence | T1105, T1547.001 | 14 |
 
 The bolded rules on both platforms are correlations. They deliberately outrank the individual steps they're built from: a sequence is more meaningful than any single event within it.
+
+![Custom Windows rules firing alongside built-ins](windows-alerts.png)
 
 ---
 
