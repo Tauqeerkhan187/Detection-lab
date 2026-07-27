@@ -1,0 +1,88 @@
+<!--
+  Windows endpoint detection rules — Sysmon telemetry.
+
+  Deployed to /var/ossec/etc/rules/local_rules.xml on the Wazuh manager
+  (kept in a separate file here for clarity; the honeypot/Linux rules live
+  in local_rules.xml).
+
+  These layer ON TOP of Wazuh's built-in Sysmon ruleset rather than
+  duplicating it — custom rules add ATT&CK-mapped severity where the
+  built-ins are weak, or correlate across events the built-ins treat
+  in isolation.
+
+  Field naming note: inside the rule engine, decoded Windows eventchannel
+  fields are win.eventdata.* / win.system.* — NOT data.win.* (the "data."
+  prefix seen in the dashboard's Discover view is display-only).
+-->
+
+<group name="sysmon,windows,attack,">
+
+  <!-- 100200: Encoded / obfuscated PowerShell.
+       Fires standalone on the process-creation event (Sysmon EID 1). -->
+  <rule id="100200" level="12">
+    <if_group>sysmon_event1</if_group>
+    <field name="win.eventdata.image" type="pcre2">(?i)\\(powershell|pwsh)\.exe$</field>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)-e(nc|ncodedcommand)?\s|-nop\s|-w(indowstyle)?\s+hidden|frombase64string|-noni</field>
+    <description>Windows: obfuscated PowerShell execution on $(win.system.computer): $(win.eventdata.commandLine)</description>
+    <mitre>
+      <id>T1059.001</id>
+      <id>T1027</id>
+    </mitre>
+    <group>windows,powershell,</group>
+  </rule>
+
+  <!-- 100201: certutil LOLBin network ingress.
+       NOTE: the SwiftOnSecurity Sysmon config does not log certutil as a
+       process-creation event (EID 1), but it DOES capture its outbound DNS
+       lookup as EID 22. So this detection keys off the DNS event — a
+       sensor-aware choice: match the telemetry the config actually emits,
+       not the telemetry you assume exists. -->
+  <rule id="100201" level="12">
+    <if_group>sysmon_event_22</if_group>
+    <field name="win.eventdata.image" type="pcre2">(?i)\\certutil\.exe$</field>
+    <description>Windows: certutil network activity (LOLBin ingress) on $(win.system.computer) querying $(win.eventdata.queryName)</description>
+    <mitre>
+      <id>T1105</id>
+      <id>T1218</id>
+    </mitre>
+    <group>windows,lolbin,</group>
+  </rule>
+
+  <!-- 100202: Registry Run-key persistence.
+       Chains off built-in rule 92302 (reg.exe modifying a Run key, level 6)
+       and escalates it with proper severity and ATT&CK mapping. No extra
+       field filter is needed — 92302 already confirms the Run-key write via
+       its own parent rule (92300). -->
+  <rule id="100202" level="12">
+    <if_sid>92302</if_sid>
+    <description>Windows: registry Run-key persistence via reg.exe on $(win.system.computer)</description>
+    <mitre>
+      <id>T1547.001</id>
+    </mitre>
+    <group>windows,persistence,</group>
+  </rule>
+
+  <!-- 100220: CORRELATION — kill chain.
+       Fires when tool ingress (100201) is followed by persistence (100202)
+       on the same host within the timeframe. Carries both techniques and
+       outranks either single step.
+
+       Wazuh gotchas encoded here:
+         * frequency is OMITTED (only timeframe kept) so if_matched_sid needs
+           just ONE prior 100201 — the correct "A then B" semantic. Setting
+           frequency="1" is invalid (minimum is 2) and refuses to load.
+         * if_matched_sid points at 100201 (a rule that actually fires), not
+           at a built-in certutil rule that never triggers on this telemetry. -->
+  <rule id="100220" level="14" timeframe="600">
+    <if_sid>100202</if_sid>
+    <if_matched_sid>100201</if_matched_sid>
+    <same_field>win.system.computer</same_field>
+    <description>Windows: kill chain - tool ingress followed by persistence on $(win.system.computer)</description>
+    <mitre>
+      <id>T1105</id>
+      <id>T1547.001</id>
+    </mitre>
+    <group>windows,kill_chain,</group>
+  </rule>
+
+</group>
