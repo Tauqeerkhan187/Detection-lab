@@ -90,7 +90,7 @@ Two platforms, documented separately:
 | **100121** | **Scripted attacker** — 10 commands in 60 s | T1059 | 10 |
 | **100122** | **Kill chain** — download → persistence | T1105, T1053 | 13 |
 
-![Linux kill chain: 100122 firing at level 13, carrying T1105 + T1053 across four tactics](linux-kill-chain.png)
+![Linux kill chain: 100122 firing at level 13, carrying T1105 + T1053 across four tactics](docs/linux-kill-chain.png)
 
 
 *(100100 is the base rule all honeypot rules inherit from.)*
