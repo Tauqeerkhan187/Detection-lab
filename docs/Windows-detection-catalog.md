@@ -83,6 +83,20 @@ individual persistence alert rather than duplicating it.
 
 ---
 
+## Verification
+
+All four custom rules were live-verified firing on `DESKTOP-NA5EPKC`. The Wazuh
+alerts summary shows the custom detections (100201 certutil ingress, 100202
+Run-key persistence, 100220 kill chain) surfacing alongside the built-in Sysmon
+rules they layer on top of:
+
+![Wazuh alerts summary showing custom Windows rules 100201, 100202, and 100220 firing alongside built-in Sysmon rules](windows-alerts.png)
+
+The level-14 kill-chain alert (100220) appears as a single correlated event,
+superseding the individual persistence alert rather than duplicating it.
+
+---
+
 ## Severity model
 
 Windows severities follow the same lifecycle logic as the Linux side:
