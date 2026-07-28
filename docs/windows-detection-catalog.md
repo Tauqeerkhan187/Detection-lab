@@ -122,14 +122,14 @@ actual work of detection engineering.
 ![Alerts summary with rule 92217 "Executable dropped in Windows root folder" at high count — the Defender quarantine artifacts described above](windows-alert-summary.png)
 
 While testing the certutil rule, a built-in rule fired repeatedly at **level 6**:
-*"Executable file dropped in folder commonly used by malware."* On a freshly
+*"Executable dropped in Windows root folder."* On a freshly
 installed Windows 11 VM, that warranted investigation.
 
 Root cause: Windows Defender was identifying the test `certutil -urlcache`
 command as `Trojan:Win32/Ceprolad.A` and quarantining it. Defender's quarantine
 process writes an executable artifact into its own ProgramData folder — and
 Sysmon logged *that* executable landing in a malware-associated path, which
-tripped the level-15 rule.
+tripped the level-6 rule.
 
 So the alert chain was: test payload → Defender quarantines it → quarantine
 artifact dropped → Sysmon logs the drop → SIEM alerts. The SIEM was detecting
