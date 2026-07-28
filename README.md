@@ -90,6 +90,9 @@ Two platforms, documented separately:
 | **100121** | **Scripted attacker** — 10 commands in 60 s | T1059 | 10 |
 | **100122** | **Kill chain** — download → persistence | T1105, T1053 | 13 |
 
+![Linux kill chain: 100122 firing at level 13, carrying T1105 + T1053 across four tactics](linux-kill-chain.png)
+
+
 *(100100 is the base rule all honeypot rules inherit from.)*
 
 ### Windows (Sysmon)
@@ -115,7 +118,7 @@ Both endpoints answer the same question — *are these separate alerts actually 
 
 **Windows** (`100220`): a certutil download followed by a registry Run-key write on the same host → one level-14 alert carrying T1105 + T1547.001.
 
-![Kill chain alert](docs/kill_chain_alert.png)
+![Kill chain alert](docs/windows-kill-chain.png)
 
 In both cases the correlated alert supersedes the individual persistence alert rather than duplicating it — one alert describing a compromise, instead of two events an analyst has to join by hand.
 
