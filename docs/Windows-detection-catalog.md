@@ -119,6 +119,8 @@ actual work of detection engineering.
 
 ### The SIEM detected the endpoint's antivirus detecting the test
 
+![Alerts summary with rule 92217 "Executable dropped in Windows root folder" at high count — the Defender quarantine artifacts described above](windows-alert-summary.png)
+
 While testing the certutil rule, a built-in rule fired repeatedly at **level 15**:
 *"Executable file dropped in folder commonly used by malware."* On a freshly
 installed Windows 11 VM, that warranted investigation.
