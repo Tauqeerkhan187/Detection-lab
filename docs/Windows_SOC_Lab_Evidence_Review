@@ -1,0 +1,94 @@
+# Windows SOC Lab Evidence Review
+
+Prepared for Tauqeer Khan | Reviewed 11 September 2026
+
+## Assessment
+
+The supplied Windows event logs substantiate controlled detection testing on DESKTOP-NA5EPKC and corroborate all 13 Windows custom-rule alerts in the July Wazuh export. Microsoft Defender recorded the certutil test command as Trojan:Win32/Ceprolad.A and recorded successful Remove actions. Sysmon captured certutil process creation, DNS queries and outbound TCP activity; Wazuh generated two correlation alerts when DNS activity preceded a Run-key write.
+
+Two explanations in the repository require correction: certutil process-creation events are present, and the claimed Defender quarantine-file-to-Wazuh-alert chain is not established. This is a lab investigation and detection-validation case, not evidence of a real-world compromise. This review adds retrospective analysis; it does not establish which analysis steps were performed during the original tests.
+
+## Evidence and method
+
+- Defender-Operational.evtx: 437 readable records, spanning 25 July to 9 September 2026; 12 event 1116 records and 6 event 1117 records. Zero per-record XML parsing errors.
+- Sysmon-Operational.evtx: 16,202 readable records, spanning 25 July to 9 September 2026. Zero per-record XML parsing errors.
+- July Wazuh export: 9,537 valid JSON alerts across 19 and 23-27 July. The final record on 25 July is damaged and was excluded. Text and JSON representations were not counted twice.
+- Detection-lab repository: XML rules, detection catalogs and screenshots reviewed in the preceding assessment.
+
+The EVTX files were parsed with python-evtx 0.8.1. Defender detections were grouped by Detection ID, rather than counting repeated event 1116 records as separate incidents. Wazuh custom alerts were matched to the raw Sysmon records using the computer, channel, event ID and EventRecordID; underlying process and registry fields were inspected. Sysmon ProcessGuid values linked process creation, DNS and network activity. Displayed timeline times below are Bangkok time (UTC+7), derived from source event times rather than SIEM ingestion times.
+
+## Defender findings
+
+All six detection IDs refer to the same command-line pattern:
+
+```text
+certutil.exe -urlcache -f http://example.com/test.txt test.txt
+```
+
+Each detection ID has two 1116 records and one 1117 record. The 1117 records say Action Name = Remove, Action ID = 3 and Error Code = 0x00000000. They do not say Quarantine. The recorded resource is a command line, so these records do not establish that a downloaded file was quarantined or that certutil.exe itself was deleted. A vendor threat label on a lab command is not independent proof that a Ceprolad malware sample was present.
+
+| Detection time on 26 July | Detection records | Action record | Recorded action |
+|---|---|---|---|
+| 18:39:35 | 326, 327 | 328 | Remove |
+| 19:36:54 | 331, 332 | 333 | Remove |
+| 19:41:28 | 334, 335 | 336 | Remove |
+| 19:55:02 | 342, 343 | 344 | Remove |
+| 19:55:32 | 345, 346 | 347 | Remove |
+| 20:40:14 | 368, 369 | 372 | Remove |
+
+A C:\lab exclusion was added at 20:39:33 on 26 July (Defender record 367), removed at 21:30:13 (record 380), and added again at 18:56:50 on 27 July (record 403). No subsequent removal is present in this export. That does not prove its current state, but the repository should not imply that the later test's exclusion was definitely removed. Another certutil detection occurred after the first exclusion was added, so the exclusion alone should not be credited with resolving the earlier interference.
+
+## Raw Sysmon evidence corrects the telemetry explanation
+
+Exact executable-name matching, excluding VirtualBox's VBoxCertUtil.exe, finds 11 certutil.exe process-creation events (EID 1), 8 DNS events (EID 22), and 9 network-connection events (EID 3). The first captured certutil process-creation event is record 12856 at 20:46:31 on 26 July. It records the command line and C:\lab working directory.
+
+For the first confirmed Wazuh correlation test:
+
+| Bangkok time on 26 July | Source record | Observation |
+|---|---|---|
+| 21:22:46 | Sysmon 13014, EID 1 | certutil.exe launched to request test.txt from example.com |
+| 21:22:46 | Sysmon 13015, EID 22 | The same ProcessGuid queried example.com; Wazuh rule 100201 matched |
+| 21:22:46 | Sysmon 13016, EID 3 | The same ProcessGuid initiated TCP activity to 104.20.23.154:80 |
+| 21:22:52 | Sysmon 13017, EID 1 | A second certutil process requested test2.txt |
+| 21:23:03 | Sysmon 13021, EID 13 | reg.exe set the user's Run\KC3 value to calc.exe; Wazuh rule 100220 matched |
+
+The DNS/network rows use EventData.UtcTime; their event-envelope timestamps are slightly later. The first process-to-registry sequence spans approximately 17 seconds. This is a temporal relationship on the same host, not proof that one process caused the other action. There is no certutil file-creation event in the captured data proving a successful file download. HTTP success, file contents and later autostart execution are not established.
+
+The second correlation is backed by Sysmon records 13774-13779 on 27 July: certutil process creation and network activity, followed by a Run\DocTest value set to calc.exe. The user described these as controlled lab tests.
+
+The absence of certutil EID 1 records from the Wazuh alert export does not establish absence from the source log. A record may exist at the endpoint without producing an alert. The specific ingestion, decoding or rule-matching cause requires further checking. The historical Sysmon configuration XML is still needed to assess its filtering rules; the retained EID 16 records its path and hash, not the XML contents.
+
+## Other triage conclusions
+
+- Wazuh rule 100200 maps to Sysmon record 10565. The encoded argument dwBoAG8AYQBtAGkA decodes as UTF-16LE to whoami. The rule detected encoded execution; the decoded command and supplied lab context support an authorized test verdict, rather than confirmed malware.
+- The July export has 132 rule 92217 alerts. Of these, 101 identify mscorsvw.exe as the creating process. These merit contextual review; process names alone do not establish benignness.
+- No Sysmon record contains a quarantine path, and no EID 11 file creation occurs within 20 seconds on either side of the six Defender 1117 actions. This does not prove no artifact existed: logging filters or missing telemetry can hide activity. It does mean the claimed quarantine-file causal chain is unsupported by these files.
+- All 13 Wazuh custom Windows alerts have corresponding raw Sysmon records: 100200 = 1, 100201 = 5, 100202 = 5, 100220 = 2. Counts describe alert records, not unique attacks or detection accuracy.
+
+## Repository corrections and next validation
+
+1. Replace the claim that certutil process creation was excluded with the observed distinction between endpoint records and SIEM alerts. Investigate the cause before naming it.
+2. Replace quarantine wording with the actual Remove action and the command-line resource; remove the unsupported artifact-to-92217 attribution.
+3. Label the correlation as certutil DNS activity followed by a Run-key modification. Explain that additional network/file evidence is required for a successful-download verdict.
+4. Document that the C:\lab exclusion was re-added on 27 July; check its current state once account access is restored.
+5. Add negative tests: persistence alone, DNS alone, reversed order, outside the 600-second window, different hosts, and legitimate administrative activity. Record expected and observed outcomes.
+6. Record final analyst disposition, escalation criteria, cleanup and evidence references. Do not claim production false-positive reduction or successful containment from this dataset.
+
+## CV wording supported by the lab
+
+Validated PowerShell, certutil and Run-key detections using Sysmon and Wazuh; documented Defender responses during controlled lab tests.
+
+## Evidence integrity
+
+SHA-256 values below identify the supplied files used in this review. They do not establish authenticity or completeness of the originating endpoint.
+
+- `Defender-Operational.evtx`: `86737be9300edb7ba411e456c5ca55e41e40c68c7eac4fdd3f54438014be1add`
+- `Sysmon-Operational.evtx`: `37f5cf4ad109e1f235d7a9935931d8445054f8f5db761e8b1c97fe88258d47ea`
+- `wazuh-alerts-july-2026.tar.gz`: `a4b8ac60182805f96bed84903814748284ac19c287bc2e5226bc3ef8bb8db867`
+
+## References
+
+- Microsoft Defender event meanings: https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-microsoft-defender-antivirus
+- Sysmon event meanings: https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon
+
+These references explain event types; the findings above come from the supplied logs. No test payloads were executed during the review.
